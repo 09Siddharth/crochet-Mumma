@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Permanent Reviews Manager</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f8f9fa; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 2rem; border-radius: 15px; }
+        h1 { color: #d63384; text-align: center; }
+        .review-item { background: #f8f9fa; padding: 1rem; margin: 1rem 0; border-radius: 10px; border-left: 4px solid #d63384; }
+        .copy-btn { background: #28a745; color: white; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer; margin: 0.5rem 0; }
+        .copy-btn:hover { background: #218838; }
+        .html-code { background: #f1f1f1; padding: 1rem; border-radius: 5px; font-family: monospace; font-size: 12px; white-space: pre-wrap; word-wrap: break-word; }
+        .instructions { background: #e7f3ff; padding: 1rem; border-radius: 10px; margin-bottom: 2rem; }
+        .clear-btn { background: #dc3545; color: white; border: none; padding: 1rem 2rem; border-radius: 10px; cursor: pointer; display: block; margin: 2rem auto; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Permanent Reviews Manager</h1>
+        
+        <div class="instructions">
+            <h3>📋 How to Make Reviews Permanent:</h3>
+            <ol>
+                <li>When customers submit reviews, they appear here</li>
+                <li>Copy the HTML code below</li>
+                <li>Open <code>index.html</code> in a text editor</li>
+                <li>Find the <code>&lt;div class="reviews-grid"&gt;</code> section</li>
+                <li>Paste the HTML code after the existing review cards</li>
+                <li>Save the file - reviews are now permanent!</li>
+            </ol>
+        </div>
+        
+        <div id="reviewsList"></div>
+        
+        <button class="clear-btn" onclick="clearPermanentReviews()">Clear All Pending Reviews</button>
+        
+        <p style="text-align: center; margin-top: 2rem;">
+            <a href="index.html" style="color: #d63384;">← Back to Website</a>
+        </p>
+    </div>
+
+    <script>
+        function loadPermanentReviews() {
+            const reviews = JSON.parse(localStorage.getItem('permanentReviews') || '[]');
+            const reviewsList = document.getElementById('reviewsList');
+            
+            if (reviews.length === 0) {
+                reviewsList.innerHTML = '<div style="text-align: center; color: #666; padding: 2rem;"><em>No new reviews to make permanent.</em></div>';
+                return;
+            }
+            
+            reviewsList.innerHTML = `
+                <h3>📝 New Reviews to Add (${reviews.length}):</h3>
+                ${reviews.map((item, index) => `
+                    <div class="review-item">
+                        <h4>Review ${index + 1}: ${item.data.name} - ${item.data.rating}⭐</h4>
+                        <p><strong>Product:</strong> ${item.data.product}</p>
+                        <p><strong>Review:</strong> "${item.data.review}"</p>
+                        <p><strong>Date:</strong> ${new Date(item.timestamp).toLocaleDateString()}</p>
+                        
+                        <button class="copy-btn" onclick="copyToClipboard(${index})">📋 Copy HTML Code</button>
+                        
+                        <div class="html-code" id="html-${index}">${escapeHtml(item.html)}</div>
+                    </div>
+                `).join('')}
+                
+                <div style="background: #fff3cd; padding: 1rem; border-radius: 10px; margin-top: 2rem;">
+                    <h4>🔄 All Reviews Combined:</h4>
+                    <button class="copy-btn" onclick="copyAllReviews()">📋 Copy All HTML</button>
+                    <div class="html-code" id="all-html">${escapeHtml(reviews.map(r => r.html).join('\\n'))}</div>
+                </div>
+            `;
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        function copyToClipboard(index) {
+            const reviews = JSON.parse(localStorage.getItem('permanentReviews') || '[]');
+            const htmlCode = reviews[index].html;
+            
+            navigator.clipboard.writeText(htmlCode).then(() => {
+                alert('✅ HTML code copied! Paste it in index.html');
+            }).catch(() => {
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = htmlCode;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                alert('✅ HTML code copied! Paste it in index.html');
+            });
+        }
+        
+        function copyAllReviews() {
+            const reviews = JSON.parse(localStorage.getItem('permanentReviews') || '[]');
+            const allHtml = reviews.map(r => r.html).join('\\n');
+            
+            navigator.clipboard.writeText(allHtml).then(() => {
+                alert('✅ All review HTML copied! Paste it in index.html');
+            }).catch(() => {
+                const textArea = document.createElement('textarea');
+                textArea.value = allHtml;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                alert('✅ All review HTML copied! Paste it in index.html');
+            });
+        }
+        
+        function clearPermanentReviews() {
+            if (confirm('⚠️ Clear all pending reviews? This will remove them from the pending list (but not from the website if already added).')) {
+                localStorage.removeItem('permanentReviews');
+                loadPermanentReviews();
+                alert('✅ Pending reviews cleared!');
+            }
+        }
+        
+        // Auto-refresh every 10 seconds to check for new reviews
+        setInterval(loadPermanentReviews, 10000);
+        
+        // Load on page start
+        loadPermanentReviews();
+    </script>
+</body>
+</html>
